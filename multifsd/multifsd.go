@@ -1,48 +1,51 @@
 package main
 
 import (
-    "fmt"
-    "log"
+	"fmt"
+	"log"
 
-    "bazil.org/fuse"
-    "bazil.org/fuse/fs"
+	"bazil.org/fuse"
+	"bazil.org/fuse/fs"
 )
 
 const (
-    FsType = "multifs"
+	fsType = "multifs"
+)
+
+var (
+	fusefs FS
 )
 
 func main() {
-    optsErr := flagParse()
-    if optsErr != nil {
-        log.Fatal(optsErr)
-    }
+	optsErr := flagParse()
+	if optsErr != nil {
+		log.Fatal(optsErr)
+	}
 
-    fmt.Println(opts)
+	fmt.Println(fusefs)
 
-    conn, err := fuse.Mount(
-        opts.target,
-        fuse.FSName(opts.master),
-        fuse.Subtype(FsType),
-        fuse.LocalVolume(),
-        fuse.VolumeName("MultiFS"),
-    )
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer conn.Close()
+	conn, err := fuse.Mount(
+		fusefs.target,
+		fuse.FSName(fusefs.master),
+		fuse.Subtype(fsType),
+		fuse.LocalVolume(),
+		fuse.VolumeName("MultiFS"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
 
-    err = fs.Serve(conn, FS{})
-    if err != nil {
-        log.Fatal(err)
-    }
+	err = fs.Serve(conn, fusefs)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    // Check if the mount process has an error to report.
-    <-conn.Ready
-    if err := conn.MountError; err != nil {
-        log.Fatal(err)
-    }
+	// Check if the mount process has an error to report.
+	<-conn.Ready
+	if err := conn.MountError; err != nil {
+		log.Fatal(err)
+	}
 
-    return
+	return
 }
-
