@@ -1,10 +1,10 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"os"
-	"flag"
-	"errors"
 )
 
 type strSlice []string
@@ -26,7 +26,7 @@ func (slf *strSlice) Set(value string) error {
 func flagParse() error {
 	var (
 		finfo os.FileInfo
-		err error
+		err   error
 	)
 
 	// Init vars
@@ -49,22 +49,21 @@ func flagParse() error {
 	if err != nil {
 		return err
 	} else if finfo.IsDir() == false {
-		return errors.New("target should be a directory.")
+		return errors.New("Target should be a directory.")
 	}
 	finfo, err = os.Lstat(fusefs.master)
 	if err != nil {
 		return err
 	} else if finfo.IsDir() == false {
-		return errors.New("master should be a directory.")
+		return errors.New("Master should be a directory.")
 	}
 	for _, slave := range fusefs.slaves {
 		finfo, err = os.Lstat(slave)
 		if err != nil {
 			return err
 		} else if finfo.IsDir() == false {
-			return errors.New("target should be a directory.")
+			return errors.New("Target should be a directory.")
 		}
 	}
 	return nil
 }
-
