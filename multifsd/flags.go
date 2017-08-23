@@ -37,6 +37,7 @@ func flagParse() error {
 	flag.StringVar(&fusefs.master, "master", "", "The master backend, where read files first. This value should not be empty.")
 	flag.Var(&fusefs.slaves, "slaves", "Optional. The slave backends of reading files.")
 	flag.BoolVar(&fusefs.copyOnRead, "cor", false, "Copy on Read. Set it to true for enable copy-file-form-slave-to-master.")
+	flag.BoolVar(&fusefs.readOnly, "ro", false, "ReadOnly. Set it to true for disable write-to-master.")
 	flag.Parse()
 
 	// Check flags

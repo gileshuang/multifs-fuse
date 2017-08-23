@@ -16,6 +16,8 @@ type FS struct {
 	slaves strSlice
 	// If we should copy file from slaves to master.
 	copyOnRead bool
+	// If filesystem mounted as readonly
+	readOnly bool
 }
 
 // Root implement the ROOT of filesystem.

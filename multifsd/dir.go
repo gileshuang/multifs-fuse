@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -18,8 +20,39 @@ type Dir struct {
 
 // Attr for get attr of directory.
 func (dir Dir) Attr(ctx context.Context, a *fuse.Attr) error {
-	a.Inode = 1
-	a.Mode = os.ModeDir | 0555
+	var (
+		p    Dir
+		pTmp fs.Node
+		err  error
+	)
+	err = nil
+	if dir.Path == "/" {
+		a.Inode = 1
+		if fusefs.readOnly == true {
+			a.Mode = os.ModeDir | 0555
+		} else {
+			a.Mode = os.ModeDir | 0775
+		}
+	} else {
+		pTmp, err = dir.Lookup(ctx, "..")
+		if err != nil {
+			return err
+		}
+		p = pTmp.(Dir)
+		pFInfo, _ := os.Stat(filepath.Join(fusefs.target, p.Path))
+		sysStat, ok := pFInfo.Sys().(*syscall.Stat_t)
+		if !ok {
+			return errors.New("Not a syscall.Stat_t")
+		}
+		a.Inode = fs.GenerateDynamicInode(sysStat.Ino,
+			filepath.Base(dir.Path))
+		// TODO: get file mode from backend
+		if fusefs.readOnly == true {
+			a.Mode = os.ModeDir | 0555
+		} else {
+			a.Mode = os.ModeDir | 0775
+		}
+	}
 	return nil
 }
 
@@ -55,12 +88,23 @@ func (dir Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 	return nil, fuse.ENOENT
 }
 
+func (dir Dir) getDirent(fInfo os.FileInfo) (fuse.Dirent, error) {
+	var (
+		dirent fuse.Dirent
+	)
+
+	return dirent, nil
+}
+
 // ReadDirAll function read the all entry of this directory.
 func (dir Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 	var (
+		dirmap  map[string]fuse.Dirent
 		dirents []fuse.Dirent
 	)
 	log.Println("ReadDirAll", dir.Path)
+
+	dirmap = make(map[string]fuse.Dirent)
 
 	// Read from master
 	mEntInfos, err := ioutil.
@@ -69,10 +113,10 @@ func (dir Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 		return nil, err
 	}
 	for _, mEntInfo := range mEntInfos {
-		dirents = append(dirents,
-			fuse.Dirent{Inode: 3,
-				Name: mEntInfo.Name(),
-				Type: fuse.DT_File})
+		entpath := filepath.Join(dir.Path, mEntInfo.Name())
+		dirmap[entpath] = fuse.Dirent{Inode: 3,
+			Name: mEntInfo.Name(),
+			Type: fuse.DT_File}
 	}
 
 	// Read from slaves
@@ -82,12 +126,20 @@ func (dir Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 		if err != nil {
 			return nil, err
 		}
+	GetSlaves:
 		for _, sEntInfo := range sEntInfos {
-			dirents = append(dirents,
-				fuse.Dirent{Inode: 3,
-					Name: sEntInfo.Name(),
-					Type: fuse.DT_File})
+			entpath := filepath.Join(dir.Path, sEntInfo.Name())
+			if _, ok := dirmap[entpath]; ok {
+				continue GetSlaves
+			}
+			dirmap[entpath] = fuse.Dirent{Inode: 3,
+				Name: sEntInfo.Name(),
+				Type: fuse.DT_File}
 		}
+	}
+
+	for _, ent := range dirmap {
+		dirents = append(dirents, ent)
 	}
 
 	return dirents, nil
