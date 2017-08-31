@@ -2,7 +2,8 @@ package main
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -15,6 +16,7 @@ import (
 // File implements both Node and Handle for the files.
 type File struct {
 	Path string
+	file *os.File
 }
 
 const greeting = "hello, world\n"
@@ -79,18 +81,51 @@ func (fl File) GetFullPath() (string, error) {
 	return fullPath, err
 }
 
-// Read function handle the read-request of File.
-//func (fl File) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
-//
-//	return err
-//}
-
-// ReadAll function read all of the file into []byte.
-func (fl File) ReadAll(ctx context.Context) ([]byte, error) {
+// Open file
+func (fl File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fs.Handle, error) {
 	fullPath, err := fl.GetFullPath()
+	if err != nil {
+		fullPath = filepath.Join(fusefs.master, fl.Path)
+		err = os.MkdirAll(filepath.Dir(fullPath), 0775)
+		if err != nil {
+			return nil, err
+		}
+	}
+	fl.file, err = os.OpenFile(fullPath, int(req.Flags), 0666)
 	if err != nil {
 		return nil, err
 	}
 
-	return ioutil.ReadFile(fullPath)
+	resp.Flags |= fuse.OpenKeepCache
+
+	return &fl, nil
 }
+
+// Release and close file
+func (fl File) Release(ctx context.Context, req *fuse.ReleaseRequest) error {
+	return fl.file.Close()
+}
+
+// Read function handle the read-request of File.
+func (fl File) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
+	log.Println("File: ReadRequestSize:", req.Size)
+	resp.Data = make([]byte, req.Size)
+	nByte, err := fl.file.ReadAt(resp.Data, req.Offset)
+	if err == io.ErrUnexpectedEOF || err == io.EOF {
+		err = nil
+	}
+
+	log.Println("File: Read nByte:", nByte)
+
+	return err
+}
+
+// ReadAll function read all of the file into []byte.
+//func (fl File) ReadAll(ctx context.Context) ([]byte, error) {
+//	fullPath, err := fl.GetFullPath()
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return ioutil.ReadFile(fullPath)
+//}

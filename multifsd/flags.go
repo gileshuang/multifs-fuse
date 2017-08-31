@@ -16,7 +16,7 @@ func (slf *strSlice) String() string {
 func (slf *strSlice) Set(value string) error {
 	for _, tmp := range *slf {
 		if value == tmp {
-			return errors.New("Duplicate flags.")
+			return errors.New("Duplicate flags")
 		}
 	}
 	*slf = append(*slf, value)
@@ -42,7 +42,7 @@ func flagParse() error {
 
 	// Check flags
 	if len(fusefs.master) == 0 || len(fusefs.target) == 0 {
-		return errors.New("Both -target and -master should not be empty.")
+		return errors.New("Both -target and -master should not be empty")
 	}
 
 	// Check if dirs exist.(target, master, slaves)
@@ -50,20 +50,20 @@ func flagParse() error {
 	if err != nil {
 		return err
 	} else if finfo.IsDir() == false {
-		return errors.New("Target should be a directory.")
+		return errors.New("Target should be a directory")
 	}
 	finfo, err = os.Lstat(fusefs.master)
 	if err != nil {
 		return err
 	} else if finfo.IsDir() == false {
-		return errors.New("Master should be a directory.")
+		return errors.New("Master should be a directory")
 	}
 	for _, slave := range fusefs.slaves {
 		finfo, err = os.Lstat(slave)
 		if err != nil {
 			return err
 		} else if finfo.IsDir() == false {
-			return errors.New("Target should be a directory.")
+			return errors.New("Target should be a directory")
 		}
 	}
 	return nil
