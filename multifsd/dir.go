@@ -19,13 +19,14 @@ type Dir struct {
 }
 
 // Attr for get attr of directory.
-func (dir Dir) Attr(ctx context.Context, a *fuse.Attr) error {
+func (dir *Dir) Attr(ctx context.Context, a *fuse.Attr) error {
+	//log.Println("Dir: Attr:", dir.Path)
 	var (
-		p    Dir
-		pTmp fs.Node
-		err  error
+	//p    *Dir
+	//pTmp *fs.Node
+	//err error
 	)
-	err = nil
+	//err = nil
 	if dir.Path == "/" {
 		a.Inode = 1
 		if fusefs.readOnly == true {
@@ -34,12 +35,13 @@ func (dir Dir) Attr(ctx context.Context, a *fuse.Attr) error {
 			a.Mode = os.ModeDir | 0775
 		}
 	} else {
-		pTmp, err = dir.Lookup(ctx, "..")
-		if err != nil {
-			return err
-		}
-		p = pTmp.(Dir)
-		pFInfo, _ := os.Stat(filepath.Join(fusefs.target, p.Path))
+		//*pTmp, err = dir.Lookup(ctx, "..")
+		//if err != nil {
+		//	return err
+		//}
+		//p = pTmp.(Dir)
+		//pFInfo, _ := os.Stat(filepath.Join(fusefs.target, p.Path))
+		pFInfo, _ := os.Stat(filepath.Dir(filepath.Join(fusefs.target, dir.Path)))
 		sysStat, ok := pFInfo.Sys().(*syscall.Stat_t)
 		if !ok {
 			return errors.New("Not a syscall.Stat_t")
@@ -57,19 +59,19 @@ func (dir Dir) Attr(ctx context.Context, a *fuse.Attr) error {
 }
 
 // Lookup return the sub Node in this directory.
-func (dir Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
+func (dir *Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
+	//log.Println("Dir: Lookup:", nodePath)
 	nodePath := filepath.Join(dir.Path, name)
-	log.Println("Lookup", nodePath)
 
 	// Lookup from master
 	mFInfo, err := os.Lstat(filepath.Join(fusefs.master, nodePath))
 	if err == nil {
 		if mFInfo.IsDir() {
-			log.Println(nodePath, "is dir")
-			return Dir{Path: nodePath}, nil
+			log.Println("Dir:", nodePath, "is dir")
+			return &Dir{Path: nodePath}, nil
 		}
-		log.Println(nodePath, "is file")
-		return File{Path: nodePath}, nil
+		log.Println("Dir:", nodePath, "is file")
+		return &File{Path: nodePath}, nil
 	}
 
 	// Lookup from slaves
@@ -77,18 +79,18 @@ func (dir Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 		sFInfo, err := os.Lstat(filepath.Join(slave, nodePath))
 		if err == nil {
 			if sFInfo.IsDir() {
-				log.Println(nodePath, "is dir")
-				return Dir{Path: nodePath}, nil
+				log.Println("Dir:", nodePath, "is dir")
+				return &Dir{Path: nodePath}, nil
 			}
-			log.Println(nodePath, "is file")
-			return File{Path: nodePath}, nil
+			log.Println("Dir:", nodePath, "is file")
+			return &File{Path: nodePath}, nil
 		}
 	}
 
 	return nil, fuse.ENOENT
 }
 
-func (dir Dir) getDirent(fInfo os.FileInfo) (fuse.Dirent, error) {
+func (dir *Dir) getDirent(fInfo os.FileInfo) (fuse.Dirent, error) {
 	var (
 		dirent fuse.Dirent
 	)
@@ -97,12 +99,12 @@ func (dir Dir) getDirent(fInfo os.FileInfo) (fuse.Dirent, error) {
 }
 
 // ReadDirAll function read the all entry of this directory.
-func (dir Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
+func (dir *Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
+	//log.Println("Dir: ReadDirAll:", dir.Path)
 	var (
 		dirmap  map[string]fuse.Dirent
 		dirents []fuse.Dirent
 	)
-	log.Println("ReadDirAll", dir.Path)
 
 	dirmap = make(map[string]fuse.Dirent)
 

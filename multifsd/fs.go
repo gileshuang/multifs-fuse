@@ -18,11 +18,13 @@ type FS struct {
 	copyOnRead bool
 	// If filesystem mounted as readonly
 	readOnly bool
+	// Size of units. Default is 512
+	unitSize uint64
 }
 
 // Root implement the ROOT of filesystem.
 func (FS) Root() (fs.Node, error) {
 	var dir = Dir{Path: "/"}
 	log.Println("Set root.")
-	return dir, nil
+	return &dir, nil
 }

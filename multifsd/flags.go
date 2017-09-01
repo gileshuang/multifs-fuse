@@ -66,5 +66,7 @@ func flagParse() error {
 			return errors.New("Target should be a directory")
 		}
 	}
+	// Set size of units to default:512
+	fusefs.unitSize = 512
 	return nil
 }
