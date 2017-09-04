@@ -104,10 +104,10 @@ func (fl *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.Open
 		return nil, err
 	}
 
-	//resp.Flags |= fuse.OpenKeepCache
+	resp.Flags |= fuse.OpenKeepCache
 
 	log.Println("File: Open:", fl)
-	return &fl, nil
+	return fl, nil
 }
 
 // Release and close file
