@@ -68,5 +68,6 @@ func flagParse() error {
 	}
 	// Set size of units to default:512
 	fusefs.unitSize = 512
+	fusefs.readSize = 128 * 1024
 	return nil
 }

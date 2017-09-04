@@ -55,7 +55,6 @@ func (fl *File) Attr(ctx context.Context, a *fuse.Attr) error {
 		a.Mode = 0664
 	}
 
-	log.Println("File: Attr:", fl)
 	// Get file size.
 	a.Size = uint64(fInfo.Size())
 	blocks := a.Size / fusefs.unitSize
@@ -106,7 +105,6 @@ func (fl *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.Open
 
 	resp.Flags |= fuse.OpenKeepCache
 
-	log.Println("File: Open:", fl)
 	return fl, nil
 }
 

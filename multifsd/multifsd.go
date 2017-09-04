@@ -30,6 +30,7 @@ func main() {
 		fuse.Subtype(fsType),
 		fuse.LocalVolume(),
 		fuse.VolumeName("MultiFS"),
+		fuse.MaxReadahead(fusefs.readSize),
 	)
 	if err != nil {
 		log.Fatal(err)

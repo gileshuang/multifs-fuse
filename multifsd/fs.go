@@ -20,6 +20,8 @@ type FS struct {
 	readOnly bool
 	// Size of units. Default is 512
 	unitSize uint64
+	// Size of read ahead. Set to max value(128*1024)
+	readSize uint32
 }
 
 // Root implement the ROOT of filesystem.

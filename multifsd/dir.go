@@ -116,9 +116,7 @@ func (dir *Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 	}
 	for _, mEntInfo := range mEntInfos {
 		entpath := filepath.Join(dir.Path, mEntInfo.Name())
-		dirmap[entpath] = fuse.Dirent{Inode: 3,
-			Name: mEntInfo.Name(),
-			Type: fuse.DT_File}
+		dirmap[entpath] = fuse.Dirent{Name: mEntInfo.Name()}
 	}
 
 	// Read from slaves
@@ -134,9 +132,7 @@ func (dir *Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 			if _, ok := dirmap[entpath]; ok {
 				continue GetSlaves
 			}
-			dirmap[entpath] = fuse.Dirent{Inode: 3,
-				Name: sEntInfo.Name(),
-				Type: fuse.DT_File}
+			dirmap[entpath] = fuse.Dirent{Name: sEntInfo.Name()}
 		}
 	}
 
