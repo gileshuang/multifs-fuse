@@ -52,7 +52,7 @@ func (fl *File) Attr(ctx context.Context, a *fuse.Attr) error {
 	if fusefs.readOnly == true {
 		a.Mode = 0444
 	} else {
-		a.Mode = 0664
+		a.Mode = fusefs.defFileMode
 	}
 
 	// Get file size.
@@ -93,12 +93,12 @@ func (fl *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.Open
 	fullPath, err := fl.getFullPath()
 	if err != nil {
 		fullPath = filepath.Join(fusefs.master, fl.Path)
-		err = os.MkdirAll(filepath.Dir(fullPath), 0775)
+		err = os.MkdirAll(filepath.Dir(fullPath), fusefs.defDirMode)
 		if err != nil {
 			return nil, err
 		}
 	}
-	fl.file, err = os.OpenFile(fullPath, int(req.Flags), 0666)
+	fl.file, err = os.OpenFile(fullPath, int(req.Flags), fusefs.defFileMode)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +117,10 @@ func (fl *File) Release(ctx context.Context, req *fuse.ReleaseRequest) error {
 // Read function handle the read-request of File.
 func (fl *File) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
 	log.Println("File: ReadRequestSize:", req.Size)
+	if fl.file == nil {
+		// File is not opened
+		return fuse.ENOTSUP
+	}
 	resp.Data = make([]byte, req.Size)
 	nByte, err := fl.file.ReadAt(resp.Data, req.Offset)
 	if err == io.ErrUnexpectedEOF || err == io.EOF {
@@ -124,6 +128,19 @@ func (fl *File) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.Read
 	}
 
 	log.Println("File: Read nByte:", nByte)
+
+	return err
+}
+
+// Write function handle the write-request of File.
+func (fl *File) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) error {
+	log.Println("File: Write:", fl.Path)
+	if fl.file == nil {
+		// File is not opened
+		return fuse.ENOTSUP
+	}
+	nByte, err := fl.file.WriteAt(req.Data, req.Offset)
+	resp.Size = nByte
 
 	return err
 }

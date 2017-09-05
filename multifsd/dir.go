@@ -33,7 +33,7 @@ func (dir *Dir) Attr(ctx context.Context, a *fuse.Attr) error {
 	if fusefs.readOnly == true {
 		a.Mode = os.ModeDir | 0555
 	} else {
-		a.Mode = os.ModeDir | 0775
+		a.Mode = os.ModeDir | fusefs.defDirMode
 	}
 	return nil
 }
@@ -67,6 +67,7 @@ func (dir *Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 		}
 	}
 
+	log.Println("Dir: Lookup: done")
 	return nil, fuse.ENOENT
 }
 
@@ -131,4 +132,33 @@ func (dir *Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 		return nil, allerr
 	}
 	return dirents, nil
+}
+
+// Access checks wheather operation has permission
+func (dir *Dir) Access(ctx context.Context, req *fuse.AccessRequest) error {
+	// TODO: check permission
+	return nil
+}
+
+// Create a new directory entry
+func (dir *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.CreateResponse) (fs.Node, fs.Handle, error) {
+	log.Println("Dir: Create:", req.Name)
+	var (
+		newFile *File
+		err     error
+	)
+	newFilePath := filepath.Join(dir.Path, req.Name)
+	fullFilePath := filepath.Join(fusefs.master, newFilePath)
+	fullDirPath := filepath.Dir(fullFilePath)
+	err = os.MkdirAll(fullDirPath, fusefs.defDirMode)
+	if err != nil {
+		return &File{}, &File{}, err
+	}
+	newFile = &File{Path: filepath.Join(dir.Path, req.Name)}
+	newFile.file, err = os.Create(fullFilePath)
+	if err != nil {
+		return &File{}, &File{}, err
+	}
+
+	return newFile, newFile, nil
 }

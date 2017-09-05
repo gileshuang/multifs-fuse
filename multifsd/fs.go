@@ -2,19 +2,20 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"bazil.org/fuse/fs"
 )
 
-// FS implements the file system.
+// FS implements the file system
 type FS struct {
-	// Where this fuse filesystem mounted.
+	// Where this fuse filesystem mounted
 	target string
-	// Where we read files from first.
+	// Where we read files from first
 	master string
-	// If read from master failed, where we read files from.
+	// If read from master failed, where we read files from
 	slaves strSlice
-	// If we should copy file from slaves to master.
+	// If we should copy file from slaves to master
 	copyOnRead bool
 	// If filesystem mounted as readonly
 	readOnly bool
@@ -22,6 +23,10 @@ type FS struct {
 	unitSize uint64
 	// Size of read ahead. Set to max value(128*1024)
 	readSize uint32
+	// Default directory mode
+	defFileMode os.FileMode
+	// Default file mode
+	defDirMode os.FileMode
 }
 
 // Root implement the ROOT of filesystem.

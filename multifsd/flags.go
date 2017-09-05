@@ -68,6 +68,11 @@ func flagParse() error {
 	}
 	// Set size of units to default:512
 	fusefs.unitSize = 512
+	// Set size of readahead
 	fusefs.readSize = 128 * 1024
+	// Set default directory mode
+	fusefs.defDirMode = 0664
+	// Set default file mode
+	fusefs.defFileMode = 0775
 	return nil
 }
