@@ -108,6 +108,16 @@ func (fl *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.Open
 	return fl, nil
 }
 
+// Fsync file into backend file system.
+func (fl *File) Fsync(ctx context.Context, req *fuse.FsyncRequest) error {
+	log.Println("File: Fsync:", fl.Path)
+	if fl.file == nil {
+		// File is not opened
+		return fuse.ENOTSUP
+	}
+	return fl.file.Sync()
+}
+
 // Release and close file
 func (fl *File) Release(ctx context.Context, req *fuse.ReleaseRequest) error {
 	log.Println("File: Release:", fl.Path)
@@ -141,6 +151,8 @@ func (fl *File) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.Wr
 	}
 	nByte, err := fl.file.WriteAt(req.Data, req.Offset)
 	resp.Size = nByte
+
+	log.Println("File: Write nByte:", nByte)
 
 	return err
 }
