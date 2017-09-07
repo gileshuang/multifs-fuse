@@ -31,7 +31,8 @@ type FS struct {
 
 // Root implement the ROOT of filesystem.
 func (FS) Root() (fs.Node, error) {
-	var dir = Dir{Path: "/"}
+	var dir = Dir{}
+	dir.Path = "/"
 	log.Println("Set root.")
 	return &dir, nil
 }

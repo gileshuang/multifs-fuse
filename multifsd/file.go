@@ -1,12 +1,10 @@
 package main
 
 import (
-	"errors"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"syscall"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -15,76 +13,10 @@ import (
 
 // File implements both Node and Handle for the files.
 type File struct {
-	Path string
+	Node
 	//parent *Dir
 	//mu     sync.RWMutex
 	file *os.File
-}
-
-// Attr for get attr of file.
-func (fl *File) Attr(ctx context.Context, a *fuse.Attr) error {
-	log.Println("File: Attr:", fl.Path)
-	pFInfo, err := os.Stat(filepath.Join(fusefs.target, fl.Path, ".."))
-	if err != nil {
-		return err
-	}
-	fInfo, err := os.Lstat(filepath.Join(fusefs.master, fl.Path))
-	if err != nil {
-	GetSlaves:
-		for _, slave := range fusefs.slaves {
-			fInfo, err = os.Lstat(filepath.Join(slave, fl.Path))
-			if err != nil {
-				continue GetSlaves
-			}
-			break GetSlaves
-		}
-	}
-
-	// Get file inode.
-	sysStat, ok := pFInfo.Sys().(*syscall.Stat_t)
-	if !ok {
-		return errors.New("Not a syscall.Stat_t")
-	}
-	a.Inode = fs.GenerateDynamicInode(sysStat.Ino,
-		filepath.Base(fl.Path))
-
-	// TODO: Get file mode from backend.
-	if fusefs.readOnly == true {
-		a.Mode = 0444
-	} else {
-		a.Mode = fusefs.defFileMode
-	}
-
-	// Get file size.
-	a.Size = uint64(fInfo.Size())
-	blocks := a.Size / fusefs.unitSize
-	if 0 != a.Size%fusefs.unitSize {
-		blocks++
-	}
-	a.Blocks = blocks
-	return nil
-}
-
-// GetFullPath return the real path of File in backend.
-func (fl *File) getFullPath() (string, error) {
-	fullPath := filepath.Join(fusefs.master, fl.Path)
-	_, err := os.Lstat(fullPath)
-	if err != nil {
-	GetSlaves:
-		for _, slave := range fusefs.slaves {
-			fullPath = filepath.Join(slave, fl.Path)
-			_, err = os.Lstat(fullPath)
-			if err != nil {
-				continue GetSlaves
-			}
-			break GetSlaves
-		}
-		if err != nil {
-			fullPath = ""
-		}
-	}
-
-	return fullPath, err
 }
 
 // Open file

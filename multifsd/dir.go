@@ -1,12 +1,10 @@
 package main
 
 import (
-	"errors"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"syscall"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -15,27 +13,7 @@ import (
 
 // Dir implements both Node and handle for the directorys.
 type Dir struct {
-	Path string
-}
-
-// Attr for get attr of directory.
-func (dir *Dir) Attr(ctx context.Context, a *fuse.Attr) error {
-	//log.Println("Dir: Attr:", dir.Path)
-	var ()
-	pFInfo, _ := os.Stat(filepath.Dir(filepath.Join(fusefs.target, dir.Path)))
-	sysStat, ok := pFInfo.Sys().(*syscall.Stat_t)
-	if !ok {
-		return errors.New("Not a syscall.Stat_t")
-	}
-	a.Inode = fs.GenerateDynamicInode(sysStat.Ino,
-		filepath.Base(dir.Path))
-	// TODO: get file mode from backend
-	if fusefs.readOnly == true {
-		a.Mode = os.ModeDir | 0555
-	} else {
-		a.Mode = os.ModeDir | fusefs.defDirMode
-	}
-	return nil
+	Node
 }
 
 // Lookup return the sub Node in this directory.
@@ -48,10 +26,10 @@ func (dir *Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 	if err == nil {
 		if mFInfo.IsDir() {
 			log.Println("Dir:", nodePath, "is dir")
-			return &Dir{Path: nodePath}, nil
+			return &Dir{Node: Node{Path: nodePath}}, nil
 		}
 		log.Println("Dir:", nodePath, "is file")
-		return &File{Path: nodePath}, nil
+		return &File{Node: Node{Path: nodePath}}, nil
 	}
 
 	// Lookup from slaves
@@ -60,10 +38,10 @@ func (dir *Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 		if err == nil {
 			if sFInfo.IsDir() {
 				log.Println("Dir:", nodePath, "is dir")
-				return &Dir{Path: nodePath}, nil
+				return &Dir{Node: Node{Path: nodePath}}, nil
 			}
 			log.Println("Dir:", nodePath, "is file")
-			return &File{Path: nodePath}, nil
+			return &File{Node: Node{Path: nodePath}}, nil
 		}
 	}
 
@@ -154,7 +132,7 @@ func (dir *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.
 	if err != nil {
 		return &File{}, &File{}, err
 	}
-	newFile = &File{Path: filepath.Join(dir.Path, req.Name)}
+	newFile = &File{Node: Node{Path: newFilePath}}
 	newFile.file, err = os.Create(fullFilePath)
 	if err != nil {
 		return &File{}, &File{}, err
