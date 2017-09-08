@@ -41,10 +41,6 @@ func (nd *Node) getFullPath() (string, error) {
 // Attr for get attr of Node
 func (nd *Node) Attr(ctx context.Context, a *fuse.Attr) error {
 	log.Println("Node.Attr:", nd.Path)
-	//pFInfo, err := os.Stat(filepath.Join(fusefs.target, nd.Path, ".."))
-	//if err != nil {
-	//	return err
-	//}
 	fInfo, err := os.Lstat(filepath.Join(fusefs.master, nd.Path))
 	if err != nil {
 	GetSlaves:
@@ -56,13 +52,6 @@ func (nd *Node) Attr(ctx context.Context, a *fuse.Attr) error {
 			break GetSlaves
 		}
 	}
-	// Get inode of this node
-	//pSysStat, ok := pFInfo.Sys().(*syscall.Stat_t)
-	//if !ok {
-	//	return errors.New("Not a syscall.Stat_t")
-	//}
-	//a.Inode = fs.GenerateDynamicInode(pSysStat.Ino,
-	//	filepath.Base(nd.Path))
 
 	// Get file attr from backend
 	sysStat, ok := fInfo.Sys().(*syscall.Stat_t)
