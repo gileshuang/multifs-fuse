@@ -112,12 +112,6 @@ func (dir *Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 	return dirents, nil
 }
 
-// Access checks wheather operation has permission
-func (dir *Dir) Access(ctx context.Context, req *fuse.AccessRequest) error {
-	// TODO: check permission
-	return nil
-}
-
 // Create a new directory entry
 func (dir *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.CreateResponse) (fs.Node, fs.Handle, error) {
 	log.Println("Dir: Create:", req.Name)

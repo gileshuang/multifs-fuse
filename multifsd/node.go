@@ -16,6 +16,28 @@ type Node struct {
 	Path string
 }
 
+// GetFullPath return the real path of File in backend.
+func (nd *Node) getFullPath() (string, error) {
+	fullPath := filepath.Join(fusefs.master, nd.Path)
+	_, err := os.Lstat(fullPath)
+	if err != nil {
+	GetSlaves:
+		for _, slave := range fusefs.slaves {
+			fullPath = filepath.Join(slave, nd.Path)
+			_, err = os.Lstat(fullPath)
+			if err != nil {
+				continue GetSlaves
+			}
+			break GetSlaves
+		}
+		if err != nil {
+			fullPath = ""
+		}
+	}
+
+	return fullPath, err
+}
+
 // Attr for get attr of Node
 func (nd *Node) Attr(ctx context.Context, a *fuse.Attr) error {
 	log.Println("Node.Attr:", nd.Path)
@@ -70,24 +92,8 @@ func (nd *Node) Attr(ctx context.Context, a *fuse.Attr) error {
 	return nil
 }
 
-// GetFullPath return the real path of File in backend.
-func (nd *Node) getFullPath() (string, error) {
-	fullPath := filepath.Join(fusefs.master, nd.Path)
-	_, err := os.Lstat(fullPath)
-	if err != nil {
-	GetSlaves:
-		for _, slave := range fusefs.slaves {
-			fullPath = filepath.Join(slave, nd.Path)
-			_, err = os.Lstat(fullPath)
-			if err != nil {
-				continue GetSlaves
-			}
-			break GetSlaves
-		}
-		if err != nil {
-			fullPath = ""
-		}
-	}
-
-	return fullPath, err
+// Access checks wheather operation has permission
+func (nd *Node) Access(ctx context.Context, req *fuse.AccessRequest) error {
+	// TODO: check permission
+	return nil
 }
