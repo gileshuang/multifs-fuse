@@ -140,3 +140,26 @@ func (dir *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.
 
 	return newFile, newFile, nil
 }
+
+// Mkdir under this Dir
+func (dir *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (fs.Node, error) {
+	var (
+		newDir   *Dir
+		err      error
+		modePerm os.FileMode
+		newMode  os.FileMode
+	)
+	newPath := filepath.Join(dir.Path, req.Name)
+	fullNewPath := filepath.Join(fusefs.master, newPath)
+	if req.Mode.IsDir() != true {
+		modePerm = 0777 - req.Umask
+	} else {
+		modePerm = req.Mode.Perm()
+	}
+	newMode = req.Mode/01000 + modePerm
+	err = os.MkdirAll(fullNewPath, newMode)
+	newDir = new(Dir)
+	newDir.Path = newPath
+
+	return newDir, err
+}
