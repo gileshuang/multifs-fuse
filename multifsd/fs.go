@@ -7,8 +7,8 @@ import (
 	"bazil.org/fuse/fs"
 )
 
-// FS implements the file system
-type FS struct {
+// Config is where the configure values are
+type Config struct {
 	// Where this fuse filesystem mounted
 	target string
 	// Where we read files from first
@@ -27,6 +27,11 @@ type FS struct {
 	defFileMode os.FileMode
 	// Default file mode
 	defDirMode os.FileMode
+}
+
+// FS implements the file system
+type FS struct {
+	Config
 }
 
 // Root implement the ROOT of filesystem.
