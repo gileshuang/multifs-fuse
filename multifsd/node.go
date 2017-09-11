@@ -68,7 +68,7 @@ func (nd *Node) Attr(ctx context.Context, a *fuse.Attr) error {
 	a.Mtime = fInfo.ModTime()
 	a.Ctime = fInfo.ModTime()
 	if fusefs.readOnly {
-		a.Mode = fInfo.Mode() & 0555
+		a.Mode = fInfo.Mode() & 037777777555
 	} else {
 		a.Mode = fInfo.Mode()
 	}
