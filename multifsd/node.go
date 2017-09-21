@@ -34,8 +34,31 @@ func (nd *Node) getFullPath() (string, error) {
 			fullPath = ""
 		}
 	}
+	if nd.checkDeleted("") != nil {
+		return "", os.ErrNotExist
+	}
 
 	return fullPath, err
+}
+
+// CheckDeleted check if the file/dir is mark as deleted.
+func (nd *Node) checkDeleted(name string) error {
+	log.Println("Dir.checkDeleted: ", filepath.Join(nd.Path, name))
+	var (
+		fullCheckPath string
+	)
+	fullCheckPath = filepath.Join(fusefs.master, nd.Path, name)
+	fInfo, err := os.Lstat(fullCheckPath)
+	if err != nil {
+		return err
+	}
+	if (fInfo.Mode() & os.ModeSymlink) == os.ModeSymlink {
+		linkName, err := os.Readlink(fullCheckPath)
+		if err == nil && linkName == deletedMark {
+			return os.ErrNotExist
+		}
+	}
+	return nil
 }
 
 // Attr for get attr of Node

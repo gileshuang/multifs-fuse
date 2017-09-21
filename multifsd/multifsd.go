@@ -9,7 +9,12 @@ import (
 )
 
 const (
-	fsType = "multifs"
+	// FsType is a const which named this filesystem type
+	FsType = "multifs"
+	// deletedMark is a string. Symlink in "master" who point
+	// to deletedMark show the is no file in "Symlink", even if
+	// there is a file exist in "slaves".
+	deletedMark = "/dev/deleted"
 )
 
 var (
@@ -27,10 +32,11 @@ func main() {
 	conn, err := fuse.Mount(
 		fusefs.target,
 		fuse.FSName(fusefs.master),
-		fuse.Subtype(fsType),
+		fuse.Subtype(FsType),
 		fuse.LocalVolume(),
 		fuse.VolumeName("MultiFS"),
 		fuse.MaxReadahead(fusefs.readSize),
+		fuse.AllowDev(),
 	)
 	if err != nil {
 		log.Fatal(err)
