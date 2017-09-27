@@ -236,3 +236,43 @@ func (dir *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 
 	return nil
 }
+
+// Symlink creates a new symbolic link in the directory
+func (dir *Dir) Symlink(ctx context.Context, req *fuse.SymlinkRequest) (fs.Node, error) {
+	// TODO: Symlink can not work now
+	log.Println("Dir: Symlink:", req.NewName)
+	var (
+		err   error
+		lnerr error
+	)
+	// remove exist deletedMark
+	fullNewName := filepath.Join(fusefs.master, dir.Path, req.Target)
+	mFInfo, err := os.Lstat(fullNewName)
+	if err == nil {
+		if (mFInfo.Mode() & os.ModeSymlink) == os.ModeSymlink {
+			linkName, err := os.Readlink(fullNewName)
+			if err == nil && linkName == deletedMark {
+				err = os.Remove(fullNewName)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		return nil, os.ErrExist
+	}
+
+	// make symlink in master
+	lnerr = os.Symlink(req.Target, fullNewName)
+	if lnerr != nil {
+		return nil, lnerr
+	}
+	targetFInfo, err := os.Stat(fullNewName)
+	if err != nil {
+		return nil, nil
+	}
+	targetPath := filepath.Join(dir.Path, req.NewName)
+	if targetFInfo.IsDir() {
+		return &Dir{Node: Node{Path: targetPath}}, nil
+	}
+	return &File{Node: Node{Path: targetPath}}, nil
+}

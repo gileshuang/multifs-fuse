@@ -18,6 +18,11 @@ type Node struct {
 
 // GetFullPath return the real path of File in backend.
 func (nd *Node) getFullPath() (string, error) {
+	// check if this node is marked as deleted
+	if nd.checkDeleted("") != nil {
+		return "", os.ErrNotExist
+	}
+
 	fullPath := filepath.Join(fusefs.master, nd.Path)
 	_, err := os.Lstat(fullPath)
 	if err != nil {
@@ -33,9 +38,6 @@ func (nd *Node) getFullPath() (string, error) {
 		if err != nil {
 			fullPath = ""
 		}
-	}
-	if nd.checkDeleted("") != nil {
-		return "", os.ErrNotExist
 	}
 
 	return fullPath, err
