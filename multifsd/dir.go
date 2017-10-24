@@ -22,26 +22,25 @@ func (dir *Dir) markAsDeleted(name string) error {
 	var (
 		masterFullPath string
 		slaveFullPath  string
+		hasSlave       bool
 		err            error
 	)
-	slaveFullPath = ""
 GetSlaves:
 	for _, slave := range fusefs.slaves {
 		slaveFullPath = filepath.Join(slave, dir.Path, name)
 		_, err = os.Lstat(slaveFullPath)
 		if err == nil {
+			hasSlave = true
 			break GetSlaves
 		}
 	}
 
-	if len(slaveFullPath) != 0 {
-		log.Println("Dir.markAsDeleted: ", "stage1")
+	if hasSlave == true {
 		masterFullPath = filepath.Join(fusefs.master, dir.Path, name)
 		err := os.Symlink(deletedMark, masterFullPath)
 		if err != nil {
 			return err
 		}
-		log.Println("Dir.markAsDeleted: ", "stage2")
 	}
 
 	return nil
@@ -239,14 +238,13 @@ func (dir *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 
 // Symlink creates a new symbolic link in the directory
 func (dir *Dir) Symlink(ctx context.Context, req *fuse.SymlinkRequest) (fs.Node, error) {
-	// TODO: Symlink can not work now
 	log.Println("Dir: Symlink:", req.NewName)
 	var (
 		err   error
 		lnerr error
 	)
 	// remove exist deletedMark
-	fullNewName := filepath.Join(fusefs.master, dir.Path, req.Target)
+	fullNewName := filepath.Join(fusefs.master, dir.Path, req.NewName)
 	mFInfo, err := os.Lstat(fullNewName)
 	if err == nil {
 		if (mFInfo.Mode() & os.ModeSymlink) == os.ModeSymlink {

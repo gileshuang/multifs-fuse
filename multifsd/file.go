@@ -90,13 +90,13 @@ func (fl *File) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.Wr
 }
 
 // Readlink reads a symbolic link
-func (fl *File) Readlink(ctx context.Context, req *fuse.ReadlinkRequest) (string, error) {
-	fullPath, err := fl.getFullPath()
-	if err != nil {
-		return "", err
-	}
-	return os.Readlink(fullPath)
-}
+//func (fl *File) Readlink(ctx context.Context, req *fuse.ReadlinkRequest) (string, error) {
+//	fullPath, err := fl.getFullPath()
+//	if err != nil {
+//		return "", err
+//	}
+//	return os.Readlink(fullPath)
+//}
 
 // ReadAll function read all of the file into []byte.
 //func (fl *File) ReadAll(ctx context.Context) ([]byte, error) {

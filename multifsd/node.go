@@ -111,3 +111,12 @@ func (nd *Node) Access(ctx context.Context, req *fuse.AccessRequest) error {
 	// TODO: check permission
 	return nil
 }
+
+// Readlink reads a symbolic link
+func (nd *Node) Readlink(ctx context.Context, req *fuse.ReadlinkRequest) (string, error) {
+	fullPath, err := nd.getFullPath()
+	if err != nil {
+		return "", err
+	}
+	return os.Readlink(fullPath)
+}
