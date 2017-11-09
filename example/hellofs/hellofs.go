@@ -12,7 +12,7 @@ import (
 	"bazil.org/fuse/fs"
 	_ "bazil.org/fuse/fs/fstestutil"
 	"golang.org/x/net/context"
-	"github.com/alienhjy/multifs-fuse/daemon"
+	"github.com/gileshuang/multifs-fuse/daemon"
 )
 
 func usage() {
