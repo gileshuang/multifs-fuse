@@ -9,6 +9,7 @@ import (
 	"syscall"
 )
 
+// Daemon start a process as a backgroud daemon.
 func Daemon(nochdir, noclose int, newArgs []string) (int, error) {
 	// already a daemon
 	if syscall.Getppid() == 1 {
@@ -45,8 +46,7 @@ func Daemon(nochdir, noclose int, newArgs []string) (int, error) {
 		return -1, fmt.Errorf("can't create process %s: %s", os.Args[0], err)
 	}
 	proc.Release()
-	os.Exit(0)
+	//os.Exit(0)
 
 	return 0, nil
 }
-
