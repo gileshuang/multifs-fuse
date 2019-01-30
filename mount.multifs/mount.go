@@ -25,8 +25,6 @@ func main() {
 		log.Println(err)
 	}
 
-	log.Println("DEBUG: 1")
-
 	flagParse()
 	fmt.Println("src:", mntFlags.src)
 	fmt.Println("des:", mntFlags.des)
