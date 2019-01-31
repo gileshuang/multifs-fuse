@@ -24,10 +24,11 @@ go get -v -u golang.org/x/net/context
 - Release/close file.
 - Make symlink.
 - Read symlink.
+- Mount this filesystem with `mount` command.
 
 ## TODO
 
-- Mount this filesystem with `mount` command.
+- Show filesystem usage with `df` command.
 - Copy on write, copy file from slaves to master backend before/while write.
 - Copy on read(optional), copy file from slaves to master backend before/while write.
 - Check operation permisson.

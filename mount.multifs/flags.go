@@ -29,19 +29,19 @@ func (slf *strSlice) Set(value string) error {
 type mountFlags struct {
 	src string
 	des string
-	opt strSlice
+	opt []string
 }
 
-func optHelpText() string {
-	var (
-		text string
-	)
-	text = `option:
-	ro
-		Mount filesystem read-only.
-	`
-	return text
-}
+// func optHelpText() string {
+// 	var (
+// 		text string
+// 	)
+// 	text = `option:
+// 	ro
+// 		Mount filesystem read-only.
+// 	`
+// 	return text
+// }
 
 func usage() {
 	fmt.Fprintln(os.Stderr, "Usage:")
@@ -58,13 +58,15 @@ Option:
 	return
 }
 
-// This flagParse will clean all args in os.Args
+// flagParse() parse the flag of mount util.
 func flagParse() error {
 	var (
 		strMntOpt   strSlice
-		nonFlagArgs strSlice
+		nonFlagArgs []string
+		tmpOSArgs   []string
 		err         error
 	)
+	tmpOSArgs = os.Args
 	flag.Usage = usage
 	flag.Var(&strMntOpt, "o", "Assign mount options.")
 	flag.Parse()
@@ -88,5 +90,32 @@ func flagParse() error {
 		log.Println("strMntOpt:", strMntOpt)
 	}
 
+	os.Args = tmpOSArgs
+
 	return err
+}
+
+func optToCmd() []string {
+	var (
+		cmd []string
+	)
+	cmd = append(cmd, "./bin/multifsd")
+
+	cmd = append(cmd, "-master="+mntFlags.src)
+	cmd = append(cmd, "-target="+mntFlags.des)
+	for _, opt := range mntFlags.opt {
+		opts := strings.SplitN(opt, "=", 2)
+		switch opts[0] {
+		case "ro":
+			cmd = append(cmd, "-ro")
+		case "cor":
+			cmd = append(cmd, "-cor")
+		case "slave":
+			cmd = append(cmd, "-slaves="+opts[1])
+		default:
+			log.Println("WARING: mount option", opt, "not supported.")
+		}
+	}
+
+	return cmd
 }
